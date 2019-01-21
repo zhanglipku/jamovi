@@ -83,7 +83,6 @@ class Analysis:
         self.results = results
         self.options.set(results.options)
         self.changes.clear()
-        self.status = Analysis.Status(results.status)
         self.clear_state = False
         self.parent._notify_results_changed(self)
 
