@@ -19,6 +19,7 @@
 #include "readdf.h"
 #include "dirs.h"
 #include "utils.h"
+#include "serialise.h"
 #include "jamovi.pb.h"
 
 #ifdef _WIN32
@@ -105,6 +106,8 @@ void EngineR::run(AnalysisRequest &analysis)
     ss << analysis.name();
     string nameAndId = ss.str();
 
+    std::cout << "Running " << nameAndId << "\n";
+
     std::function<Rcpp::DataFrame(Rcpp::List)> readDatasetHeader;
     std::function<Rcpp::DataFrame(Rcpp::List)> readDataset;
 
@@ -160,6 +163,13 @@ void EngineR::run(AnalysisRequest &analysis)
     Rcpp::Function setOptions = rInside.parseEvalNT("base::options");
     Rcpp::List optionsValues = setOptions(); // no args is a getter
 
+    static Rcpp::Environment base("package:base");
+    static Rcpp::Function procTime = base.get("proc.time");
+    static Rcpp::Function minus = base.get("-");
+
+    SEXP time = procTime();
+    std::cout << "initing\n";
+
     Rcpp::as<Rcpp::Function>(ana["init"])(Rcpp::Named("noThrow", true));
 
     if (Rcpp::as<bool>(ana["errored"]))
@@ -169,13 +179,25 @@ void EngineR::run(AnalysisRequest &analysis)
         return;
     }
 
+    std::cout << "inited\n";
+    Rcpp::print(minus(procTime(), time));
+    PROTECT(time = procTime());
+
     if ( ! analysis.clearstate())
     {
         Rcpp::CharacterVector changed(analysis.changed().begin(), analysis.changed().end());
         Rcpp::as<Rcpp::Function>(ana[".load"])(changed);
     }
 
+    std::cout << ".loaded\n";
+    Rcpp::print(minus(procTime(), time));
+    time = procTime();
+
     Rcpp::as<Rcpp::Function>(ana["postInit"])(true);
+
+    std::cout << "postInited\n";
+    Rcpp::print(minus(procTime(), time));
+    time = procTime();
 
     // here i assign the analysis to a variable, and access it by
     // name from here on. my intention is to replace all this stuff later.
@@ -225,11 +247,19 @@ void EngineR::run(AnalysisRequest &analysis)
     {
         sendResults(INC_SYNTAX, COMPLETE);
         rInside.parseEvalQ("analysis$.save()");
+
+        std::cout << "saved\n";
+        Rcpp::print(minus(procTime(), time));
+        time = procTime();
     }
     else if (analysis.perform() == 0)   // INIT
     {
         sendResults(NO_SYNTAX, COMPLETE);
         rInside.parseEvalQ("analysis$.save()");
+
+        std::cout << "saved\n";
+        Rcpp::print(minus(procTime(), time));
+        time = procTime();
     }
     else
     {
@@ -241,31 +271,57 @@ void EngineR::run(AnalysisRequest &analysis)
             return;
         }
 
+        std::cout << "ran\n";
+        Rcpp::print(minus(procTime(), time));
+        time = procTime();
+
         sendResults(NO_SYNTAX, IN_PROGRESS);
         rInside.parseEvalQNT("analysis$.createImages(noThrow=TRUE);");
+
+        std::cout << "created images\n";
+        Rcpp::print(minus(procTime(), time));
+        time = procTime();
+
         sendResults(NO_SYNTAX, IN_PROGRESS);
         sendResults(INC_SYNTAX, COMPLETE);
         rInside.parseEvalQ("analysis$.save()");
+
+        std::cout << "saved\n";
+        Rcpp::print(minus(procTime(), time));
+        time = procTime();
     }
 
+    std::cout << "Restoring options\n";
+    std::cout.flush();
+
     setOptions(optionsValues); // restore options
+
+    std::cout << "done\n";
+    std::cout.flush();
 }
 
 void EngineR::sendResults2(Rcpp::Environment &ana, bool incAsText, bool complete)
 {
-    Rcpp::Function serialize = ana["serialize"];
-    Rcpp::RawVector results = serialize(incAsText);
-    string raw(results.begin(), results.end());
+    // Rcpp::Function serialize = ana["serialize"];
+    // Rcpp::RawVector results = serialize(incAsText);
+    // string raw(results.begin(), results.end());
+    string raw;
+    serialise(ana, incAsText, raw);
     resultsReceived(raw, complete);
 }
 
 void EngineR::sendResults(bool incAsText, bool complete)
 {
-    stringstream ss;
-    ss << "analysis$serialize(";
-    ss << "incAsText=" << (incAsText ? "TRUE" : "FALSE") << ")\n";
-    Rcpp::RawVector rawVec = _rInside->parseEval(ss.str());
-    string raw(rawVec.begin(), rawVec.end());
+    // stringstream ss;
+    // ss << "analysis$serialize(";
+    // ss << "incAsText=" << (incAsText ? "TRUE" : "FALSE") << ")\n";
+    // Rcpp::RawVector rawVec = _rInside->parseEval(ss.str());
+    // string raw(rawVec.begin(), rawVec.end());
+
+    Rcpp::Environment ana = _rInside->parseEval("analysis");
+
+    string raw;
+    serialise(ana, incAsText, raw);
     resultsReceived(raw, complete);
 }
 
@@ -311,18 +367,21 @@ void EngineR::setLibPaths(const std::string &moduleName)
     _rInside->parseEvalQNT(ss.str());
 }
 
-SEXP EngineR::checkpoint(SEXP results)
+SEXP EngineR::checkpoint(SEXP flush)
 {
     bool abort = _checkForAbort();
 
     if (abort)
         return Rcpp::CharacterVector("restart");
 
-    if ( ! Rf_isNull(results)) {
-        Rcpp::RawVector rawVec = Rcpp::as<Rcpp::RawVector>(results);
-        std::string raw(rawVec.begin(), rawVec.end());
-        resultsReceived(raw, false);
-    }
+    // if (Rcpp::as<bool>(flush))
+    //     sendResults(false, false);
+
+    // if ( ! Rf_isNull(results)) {
+    //     Rcpp::RawVector rawVec = Rcpp::as<Rcpp::RawVector>(results);
+    //     std::string raw(rawVec.begin(), rawVec.end());
+    //     resultsReceived(raw, false);
+    // }
 
     return R_NilValue;
 }
