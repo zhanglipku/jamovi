@@ -11,6 +11,9 @@ const RefTable = require('./refs');
 const createItem = require('./create').createItem;
 const formatIO = require('../common/utils/formatio');
 const b64 = require('../common/utils/b64');
+const Annotation = require('./annotation');
+
+//require('./annotation');
 
 
 class Main {  // this is constructed at the bottom
@@ -21,6 +24,9 @@ class Main {  // this is constructed at the bottom
         this.$results = null;
         this.resultsDefn = null;
         this.active = null;
+        this._focus = 0;
+        this._annotationFocused = false;
+        this._annotationState = false;
 
         window.addEventListener('message', event => this._messageEvent(event));
 
@@ -36,6 +42,12 @@ class Main {  // this is constructed at the bottom
             this.mainWindow.postMessage({
                 type : 'setParam',
                 data : { address, options }}, '*');
+        };
+
+        window.getParam = (address, name) => {
+            let optionName = 'results/' + address.join('/') + '/' + name;
+            if (optionName in this.resultsDefn.options)
+                return this.resultsDefn.options[optionName];
         };
 
         window.openUrl = (url) => {
@@ -79,6 +91,15 @@ class Main {  // this is constructed at the bottom
         this._menuEvent({ type: 'activated', address: lastEntry.address });
     }
 
+    _sendAnnotationRequest(name, data) {
+        let event = {
+            type: name,
+            data: data
+        };
+
+        this.mainWindow.postMessage(event, '*');
+    }
+
     _messageEvent(event) {
 
         if (event.source === window)
@@ -98,6 +119,15 @@ class Main {  // this is constructed at the bottom
             if (this._refTable)
                 this._refTable.setup(eventData.refs, eventData.refsMode);
         }
+        else if (hostEvent.type === 'selected') {
+            this._analysisSelected = eventData.state;
+            if (this.$results) {
+                if (this._analysisSelected)
+                    this.$results.addClass('analysis-selected');
+                else
+                    this.$results.removeClass('analysis-selected');
+            }
+        }
         else if (hostEvent.type === 'click') {
             let el = document.elementFromPoint(hostEvent.pageX, hostEvent.pageY);
             if (el === document.body)
@@ -106,6 +136,16 @@ class Main {  // this is constructed at the bottom
             clickEvent.pageX = hostEvent.pageX;
             clickEvent.pageY = hostEvent.pageY;
             $(el).trigger(clickEvent);
+        }
+        else if (hostEvent.type === 'addNote') {
+            let address = eventData.address;
+            let options = eventData.options;
+
+            let annotation = Annotation.getControl(address, false);
+            if (annotation !== null)
+                annotation.focus(options.text);
+
+
         }
         else if (hostEvent.type === 'getcontent') {
 
@@ -163,16 +203,24 @@ class Main {  // this is constructed at the bottom
         else if (hostEvent.type === 'menuEvent') {
             this._menuEvent(eventData);
         }
+        else if (hostEvent.type === 'annotationEvent') {
+            this._annotationEvent(eventData);
+        }
     }
 
     _render() {
+        Annotation.detach();
+
         this.$body.attr('data-mode', this.resultsDefn.mode);
         this.$body.empty();
+        this.$body.off('annotation-editing');
+        this.$body.off('annotation-lost-focus');
 
         this._refTable = new RefTable();
         this._refTable.setup(this.resultsDefn.refs, this.resultsDefn.refsMode);
 
         this.$results = $('<div id="results"></div>');
+        this._updateAnnotationStates();
         this.results = createItem(
             this.resultsDefn.results,
             this.resultsDefn.options,
@@ -187,12 +235,82 @@ class Main {  // this is constructed at the bottom
 
         this.$selector = $('<div id="selector"></div>').appendTo(this.$body);
 
+        this.$body.on('annotation-editing', (event) => {
+            this._focus += 1;
+            if (this._focus === 1)
+                this._sendAnnotationRequest('annotationFocus', event.annotationData);
+        });
+
+        this.$body.on('annotation-lost-focus', (event) => {
+            this._focus -= 1;
+            if (this._focus === 0)
+                this._sendAnnotationRequest('annotationLostFocus', event.annotationData);
+            else if (this._focus < 0)
+                throw "shouldn't get here";
+        });
+
+        this.$body.on('annotation-formats', (event, data) => {
+            this._sendAnnotationRequest('annotationFormats', event.detail.annotationData);
+        });
+
+        this.$body.on('annotation-changed', (event) => {
+            this._sendAnnotationRequest('annotationChanged', event.annotationData);
+        });
+
         $(document).ready(() => {
             let erd = ERDM({ strategy: 'scroll' });
             erd.listenTo(this.$results[0], (element) => {
                 this._notifyResize();
             });
         });
+    }
+
+    _updateAnnotationStates() {
+        if (this.$results) {
+            if (this._annotationFocused)
+                this.$results.addClass('edit-focus');
+            else
+                this.$results.removeClass('edit-focus');
+            if (this._annotationState)
+                this.$results.addClass('edit-state');
+            else
+                this.$results.removeClass('edit-state');
+            if (this._analysisSelected)
+                this.$results.addClass('analysis-selected');
+            else
+                this.$results.removeClass('analysis-selected');
+        }
+    }
+
+    _annotationEvent(event) {
+        switch (event.type) {
+            case 'editState':
+                this._annotationState = event.state;
+                if (this.$results) {
+                    if (this._annotationState)
+                        this.$results.addClass('edit-state');
+                    else
+                        this.$results.removeClass('edit-state');
+                }
+                break;
+            case 'editFocused':
+                this._annotationFocused = event.state;
+                if (this.$results) {
+                    if (this._annotationFocused)
+                        this.$results.addClass('edit-focus');
+                    else
+                        this.$results.removeClass('edit-focus');
+                }
+                break;
+            case 'action':
+                for (let annotation of Annotation.controls) {
+                    if (annotation.$el.hasClass('had-focus')) {
+                        annotation.processToolbarAction(event.action);
+                        break;
+                    }
+                }
+                break;
+        }
     }
 
     _menuEvent(event) {

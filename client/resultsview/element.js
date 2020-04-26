@@ -74,7 +74,7 @@ const ElementView = Backbone.View.extend({
         }
     },
     _menuOptions(event) {
-        return [ { label: 'Copy' }, { label: 'Export' } ];
+        return [ { label: 'Copy' }, { label: 'Export' }, { label: 'Add Note'} ];
     },
     address() {
         let addr;

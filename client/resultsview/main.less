@@ -1,6 +1,13 @@
 
 @import (inline) "../lib/metro-icons.css";
 
+@import (inline) '../node_modules/quill/dist/quill.core.css';
+/*@import (inline) '../node_modules/quill/dist/quill.snow.css';*/
+@import (inline) '../node_modules/katex/dist/katex.min.css';
+
+@import (inline) './annotation.css';
+@import (inline) '../node_modules/highlight.js/styles/tomorrow.css';
+
 body {
     font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol" ;
     color: #333333 ;
@@ -93,15 +100,10 @@ table {
     margin-bottom: 24px ;
 }
 
-.jmv-results-group .jmv-results-group {
-    padding-top: 0 ;
-    padding-bottom: 0 ;
-    margin-bottom: 0 ;
-}
-
 .jmv-results-group-container,
 .jmv-results-array-container {
     margin-left: 24px ;
+    margin-bottom: 12px;
 }
 
 #results > .jmv-results-group-container {
@@ -424,4 +426,18 @@ pre {
 
 .jmv-results-refs {
     display: grid ;
+}
+
+.ql-toolbar {
+    transition: 0.2s height, 0.2s opacity, 0.2s padding, 0.2s border-color, 0.2s border-width;
+    opacity: 1;
+    height: 40px;
+    overflow: hidden;
+}
+
+
+.annotate .jmv-annotation {
+    height: 20px;
+    opacity: 1;
+    overflow: visible;
 }

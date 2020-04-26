@@ -4,6 +4,8 @@ const $ = require('jquery');
 const Backbone = require('backbone');
 Backbone.$ = $;
 
+const Annotation = require('./annotation');
+
 const Elem = require('./element');
 const b64 = require('../common/utils/b64');
 
@@ -131,6 +133,8 @@ const ArrayView = Elem.View.extend({
         if ( ! valid && elements.length > 0)
             selected = elements[elements.length - 1].name;
 
+        this._insertAnnotation(this.address(), this.level, true);
+
         for (let element of elements) {
             if (element.visible === 1 || element.visible === 3)
                 continue;
@@ -156,9 +160,15 @@ const ArrayView = Elem.View.extend({
             promises.push(child.ready);
 
             $el.appendTo(this.$container);
+
+            if (element.name)
+                this._insertAnnotation(child.address(), this.level, false);
         }
 
         this.ready = Promise.all(promises);
+    },
+    _insertAnnotation(path, levelIndex, top) {
+        Annotation.attachControl(this.$container[0], path, levelIndex, top);
     },
     _sendEvent(event) {
         if (this.parent !== null && event.type === 'menu' && event.data.entries.length > 0) {

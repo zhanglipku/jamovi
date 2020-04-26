@@ -3,6 +3,7 @@
 const $ = require('jquery');
 const Backbone = require('backbone');
 Backbone.$ = $;
+const Annotation = require('./annotation');
 
 const Elem = require('./element');
 
@@ -82,7 +83,10 @@ const GroupView = Elem.View.extend({
         let elements = this.model.attributes.element.elements;
         let options = this.model.attributes.options;
 
-        for (let element of elements) {
+        this._insertAnnotation(this.address(), this.level, true);
+
+        for (let i = 0; i < elements.length; i++) {
+            let element = elements[i];
             if (this.mode === 'rich' && element.name === 'syntax' && element.type === 'preformatted')
                 continue;
             if ( ! this.devMode && element.name === 'debug' && element.type === 'preformatted')
@@ -96,11 +100,18 @@ const GroupView = Elem.View.extend({
                 this.children.push(child);
                 $el.appendTo(this.$container);
                 $('<br>').appendTo(this.$container);
+
+                if (element.name)
+                    this._insertAnnotation(child.address(), this.level, false);
+
                 promises.push(child);
             }
         }
 
         this.ready = Promise.all(promises);
+    },
+    _insertAnnotation(path, levelIndex, top) {
+        Annotation.attachControl(this.$container[0], path, levelIndex, top);
     },
     _menuOptions(event) {
         if (this.isRoot())

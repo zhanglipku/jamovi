@@ -2,6 +2,8 @@
 
 const $ = require('jquery');
 const Backbone = require('backbone');
+const Quill = require('quill');
+window.katex = require('katex');
 Backbone.$ = $;
 
 const Elem = require('./element');
@@ -28,6 +30,48 @@ var HtmlView = Elem.View.extend({
         if (this.model === null)
             this.model = new HtmlModel();
 
+        let $editorBox = $(`<div class="editor-box">
+                            <div id="toolbar"></div>
+                            <div class="editor"></div>
+                        </div>`);
+        this.$el.append($editorBox);
+
+        this.model.set('title', '');
+        var toolbarOptions = [
+        			  ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
+        			  ['code-block', 'formula'],
+        			  [{ 'header': 2 }],               // custom button values
+        			  [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        			  [{ 'script': 'sub'}, { 'script': 'super' }],      // superscript/subscript
+        			  [{ 'indent': '-1'}, { 'indent': '+1' }],          // outdent/indent
+
+        			  [{ 'color': [] }, { 'background': [] }],          // dropdown with defaults from theme
+        			  [{ 'align': [] }]                                       // remove formatting button
+        			];
+
+        let options = {
+              modules: {
+                toolbar: toolbarOptions
+              },
+              placeholder: 'Compose an epic...',
+              theme: 'snow'
+        };
+        this.editor = new Quill($editorBox.find('.editor')[0], options);
+        let $editor = $editorBox.find('.ql-editor');
+        let $toolbar = $editorBox.find('.ql-toolbar');
+        let toolbarClicked = false;
+        $toolbar.on('mousedown', () => {
+            toolbarClicked = true;
+        });
+        $editor.on('focus', () => {
+            $editorBox.removeClass('readonly');
+        });
+        $editor.on('blur', () => {
+            if (toolbarClicked === false)
+                $editorBox.addClass('readonly');
+            toolbarClicked = false;
+        });
+
         this.$head = $('head');
         this.render();
     },
@@ -51,9 +95,12 @@ var HtmlView = Elem.View.extend({
             this.$head.append('<script src="module/' + script + '" class="module-asset"></script>');
 
         this.ready = Promise.all(promises).then(() => {
-            this.$el.html(doc.content);
+            //this.$el.html(doc.content);
             this.$el.find('a[href]').on('click', (event) => this._handleLinkClick(event));
         });
+    },
+    _editorRender: function() {
+        let editor = new Quill(this.$el);
     },
     _handleLinkClick(event) {
         let href = $(event.target).attr('href');

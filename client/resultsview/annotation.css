@@ -1,0 +1,293 @@
+
+.jmv-annotation .insert-box {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    cursor: text;
+    height: 0px;
+    transition: .2s height, .2s opacity;
+    position: absolute;
+    top: 1px;
+    left: 0px;
+    width: 100%;
+    z-index: 20;
+}
+
+.jmv-annotation {
+    position: relative;
+    transition: .2s height;
+    color: #3E6DA9;
+}
+
+.jmv-annotation .insert-box:hover .line {
+    opacity: 1;
+}
+
+.jmv-annotation .insert-box:hover .icon {
+    opacity: 0.6;
+}
+
+.jmv-annotation .line {
+    border: none;
+    border-top: 1px dashed #aaaaaa;
+    opacity: 0.5;
+    transition: 0.2s opacity;
+    margin-top: 14px;
+    margin-bottom: 1px;
+}
+
+.jmv-annotation .icon {
+    background-image: url(../../assets/annotations-insert-1.svg);
+    height: 14px;
+    width: 13px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    transition: 0.2s opacity;
+    opacity: 0.3;
+    margin-left: -10px;
+    /*display: none;*/
+}
+
+
+#results:not(.edit-state) .jmv-annotation .editor-box,
+#results.edit-state.edit-focus .jmv-annotation:not(.focused) .editor-box {
+    background-color: transparent;
+}
+
+#results:not(.edit-state) .jmv-annotation .line-box,
+#results.edit-state.edit-focus .jmv-annotation:not(.focused) .line-box {
+    background-color: transparent;
+}
+
+.jmv-annotation .line-box {
+    background-color: #ecf3fb;
+    transition: 0.2s background-color;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#results:not(.analysis-selected):not(.edit-focus) .jmv-annotation .line-box {
+    background-color: #cddae8;
+}
+
+#results.edit-state.analysis-selected .jmv-annotation .line-box:hover {
+    background-color: #cddae8;
+}
+
+
+.jmv-annotation:not(.edited) .editor-box .ql-editor {
+    line-height: 0;
+}
+
+
+#results:not(.edit-state) .jmv-annotation .insert-box {
+    height: 0px;
+    opacity: 0;
+}
+
+#results:not(.edit-state) .jmv-annotation {
+    min-height: 0px;
+}
+
+.jmv-annotation.level-0 .editor-box, .jmv-annotation.level-0 .insert-box {
+    width: 580px;
+}
+
+.jmv-annotation.level-1 .editor-box, .jmv-annotation.level-1 .insert-box {
+    width: 555px;
+}
+
+.jmv-annotation.level-2 .editor-box, .jmv-annotation.level-2 .insert-box {
+    width: 530px;
+}
+
+.jmv-annotation.level-3 .editor-box, .jmv-annotation.level-3 .insert-box {
+    width: 505px;
+}
+
+.jmv-annotation .editor-box {
+    width: 100%;
+    transition: .2s opacity, 0.2s background-color, 0.2s margin, 0.2s padding;
+    overflow: hidden;
+    opacity: 0;
+    overflow: visible;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    padding-left: 0px;
+    padding-right: 0px;
+    margin-left: 0px;
+    margin-top: 0px;
+    background-color: #ecf3fb;
+}
+
+#results.edit-state:not(.analysis-selected) .jmv-annotation .editor-box {
+    background-color: #cddae8;
+}
+
+#results.edit-state.analysis-selected .jmv-annotation .editor-box:hover {
+    background-color: #cddae8;
+}
+
+#results.edit-state.analysis-selected .jmv-annotation.focused .editor-box {
+    background-color: #f3f7fc
+}
+
+.jmv-annotation.edited .editor-box {
+    opacity: 1;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-left: -10px;
+    margin-top: -5px;
+}
+
+.jmv-annotation.edited .insert-box {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.jmv-annotation .ql-editor {
+    padding: 0;
+    transition: 0.2s line-height;
+}
+
+.jmv-annotation .ql-container {
+    font-family: unset;
+    font-size: unset;
+}
+
+.ql-toolbar {
+  display: none;
+}
+
+.editor.ql-container {
+  border: unset;
+}
+
+/* remove padding at top of editor */
+.jmv-annotation .ql-editor :first-child:not(code) {
+  padding-top: 0px;
+}
+/*
+here you set what paragraph spacing you want.
+DO NOT USE MARGIN INSIDE OF EDITOR OR IT WILL ADD NEWLINES:
+https://github.com/quilljs/quill/issues/1157
+*/
+.jmv-annotation .ql-editor p {
+  padding-top: 12px;
+}
+.jmv-annotation .ql-editor h1, .jmv-annotation .ql-editor h2, .jmv-annotation .ql-editor h3 {
+  padding-top: 16px;
+}
+
+.jmv-annotation .ql-editor pre.ql-syntax {
+    padding: 5px 5px 5px 10px;
+    border: 1px dashed grey;
+    border-radius: 5px;
+    margin-top: 12px;
+    overflow: auto;
+    color: #333333;
+}
+
+/*.ql-snow .ql-editor pre.ql-syntax {
+  all: revert;
+}
+
+.ql-snow .ql-editor pre {
+  all:  revert;
+}
+
+.ql-snow .ql-editor code, .ql-snow .ql-editor pre {
+  all: revert;
+}
+
+.ql-snow .ql-editor code {
+  all: revert;
+}*/
+
+.ql-container.ql-disabled .ql-tooltip {
+  visibility: hidden;
+}
+
+.jmv-note-theme .ql-hidden {
+  display: none;
+}
+
+.jmv-note-theme .ql-tooltip {
+  position: absolute;
+  transform: translateY(10px);
+}
+
+.jmv-note-theme .ql-tooltip a {
+  cursor: pointer;
+  text-decoration: none;
+}
+.jmv-note-theme .ql-tooltip.ql-flip {
+  transform: translateY(-10px);
+}
+
+.jmv-note-theme .ql-tooltip {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0px 0px 5px #ddd;
+  color: #444;
+  padding: 5px 12px;
+  white-space: nowrap;
+}
+.jmv-note-theme .ql-tooltip::before {
+  content: "Visit URL:";
+  line-height: 26px;
+  margin-right: 8px;
+}
+.jmv-note-theme .ql-tooltip input[type=text] {
+  display: none;
+  border: 1px solid #ccc;
+  font-size: 13px;
+  height: 26px;
+  margin: 0px;
+  padding: 3px 5px;
+  width: 170px;
+}
+.jmv-note-theme .ql-tooltip a.ql-preview {
+  display: inline-block;
+  max-width: 200px;
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+  vertical-align: top;
+}
+.jmv-note-theme .ql-tooltip a.ql-action::after {
+  border-right: 1px solid #ccc;
+  content: 'Edit';
+  margin-left: 16px;
+  padding-right: 8px;
+}
+.jmv-note-theme .ql-tooltip a.ql-remove::before {
+  content: 'Remove';
+  margin-left: 8px;
+}
+.jmv-note-theme .ql-tooltip a {
+  line-height: 26px;
+}
+.jmv-note-theme .ql-tooltip.ql-editing a.ql-preview,
+.jmv-note-theme .ql-tooltip.ql-editing a.ql-remove {
+  display: none;
+}
+.jmv-note-theme .ql-tooltip.ql-editing input[type=text] {
+  display: inline-block;
+}
+.jmv-note-theme .ql-tooltip.ql-editing a.ql-action::after {
+  border-right: 0px;
+  content: 'Save';
+  padding-right: 0px;
+}
+.jmv-note-theme .ql-tooltip[data-mode=link]::before {
+  content: "Enter link:";
+}
+.jmv-note-theme .ql-tooltip[data-mode=formula]::before {
+  content: "Enter formula:";
+}
+.jmv-note-theme .ql-tooltip[data-mode=video]::before {
+  content: "Enter video:";
+}
