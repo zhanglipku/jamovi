@@ -136,7 +136,6 @@ const Annotation = function(address, isTop) {
 
         this._backgroundClicked = this._backgroundClicked.bind(this);
         this._event = this._event.bind(this);
-        this._changeEvent = this._changeEvent.bind(this);
 
         this._focusEvent = (event) => this._focused(event);
         this._blurEvent =(event) => this.editor.setSelection(null);
@@ -149,10 +148,6 @@ const Annotation = function(address, isTop) {
         return this.path === path;
     };
 
-    this._changeEvent = function(delta, oldDelta, source) {
-        this._fireEvent('annotation-changed');
-    }
-
     this.attach = function() {
         if (this.attached)
             return;
@@ -160,8 +155,8 @@ const Annotation = function(address, isTop) {
         this.ql_editor.addEventListener('focus', this._focusEvent);
         this._host.addEventListener('click', this._backgroundClicked);
 
-        this.editor.on('selection-change', this._event);
-        this.editor.on('text-change', this._changeEvent);
+        this.editor.on('editor-change', this._event);
+        //this.editor.on('text-change', this._changeEvent);
         this.editor.root.addEventListener('blur', this._blurEvent);
 
         this.attached = true;
@@ -174,8 +169,8 @@ const Annotation = function(address, isTop) {
         this.ql_editor.removeEventListener('focus', this._focusEvent);
         this._host.removeEventListener('click', this._backgroundClicked);
 
-        this.editor.off('selection-change', this._event);
-        this.editor.off('text-change', this._changeEvent);
+        this.editor.off('editor-change', this._event);
+
         this.editor.root.removeEventListener('blur', this._blurEvent);
 
         this.$el.detach();
@@ -207,11 +202,17 @@ const Annotation = function(address, isTop) {
         return length <= 1;
     };
 
-    this._event = function(range, oldRange, source) {
-        if (range === null)
-            this._blurred();
-        else
-            this._fireEvent('annotation-formats', this.editor.getFormat());
+    this._event = function(eventName, range, oldRange, source) {
+        if (eventName === 'selection-change') {
+            if (range === null)
+                this._blurred();
+            else
+                this._fireEvent('annotation-formats', this.editor.getFormat());
+        }
+
+        if (eventName === 'text-change' && source === 'user') {
+            this._fireEvent('annotation-changed');
+        }
     };
 
     this._blurred = function(e) {
