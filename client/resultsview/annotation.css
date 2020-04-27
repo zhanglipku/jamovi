@@ -1,5 +1,5 @@
 
-.jmv-annotation .insert-box {
+/*.jmv-annotation .insert-box {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -11,23 +11,26 @@
     left: 0px;
     width: 100%;
     z-index: 20;
-}
+}*/
 
 .jmv-annotation {
     position: relative;
     transition: .2s height;
     color: #3E6DA9;
+    background-color: #ecf3fb;
+    margin-top: 3px;
+    margin-bottom: 3px;
 }
 
-.jmv-annotation .insert-box:hover .line {
+/*.jmv-annotation .insert-box:hover .line {
     opacity: 1;
 }
 
 .jmv-annotation .insert-box:hover .icon {
     opacity: 0.6;
-}
+}*/
 
-.jmv-annotation .line {
+/*.jmv-annotation .line {
     border: none;
     border-top: 1px dashed #aaaaaa;
     opacity: 0.5;
@@ -46,8 +49,7 @@
     transition: 0.2s opacity;
     opacity: 0.3;
     margin-left: -10px;
-    /*display: none;*/
-}
+}*/
 
 
 #results:not(.edit-state) .jmv-annotation .editor-box,
@@ -55,8 +57,8 @@
     background-color: transparent;
 }
 
-#results:not(.edit-state) .jmv-annotation .line-box,
-#results.edit-state.edit-focus .jmv-annotation:not(.focused) .line-box {
+#results:not(.edit-state) .jmv-annotation /*.line-box*/,
+#results.edit-state.edit-focus .jmv-annotation:not(.focused) /*.line-box*/ {
     background-color: transparent;
 }
 
@@ -68,11 +70,11 @@
     visibility: hidden ;
 }
 
-#results:not(.analysis-selected):not(.edit-focus) .jmv-annotation .line-box {
+#results.edit-state:not(.analysis-selected):not(.edit-focus) .jmv-annotation /*.line-box*/ {
     background-color: #cddae8;
 }
 
-#results.edit-state.analysis-selected .jmv-annotation .line-box:hover {
+#results.edit-state.analysis-selected .jmv-annotation:hover /*.line-box:hover*/ {
     background-color: #cddae8;
 }
 
@@ -82,28 +84,29 @@
 }
 
 
-#results:not(.edit-state) .jmv-annotation .insert-box {
-    height: 0px;
-    opacity: 0;
+#results:not(.edit-state) .jmv-annotation /*.insert-box*/ {
+    /*height: 0px;
+    opacity: 0;*/
+    background-color: transparent;
 }
 
 #results:not(.edit-state) .jmv-annotation {
     min-height: 0px;
 }
 
-.jmv-annotation.level-0 .editor-box, .jmv-annotation.level-0 .insert-box {
+.jmv-annotation.level-0 .editor-box, .jmv-annotation.level-0 /*.insert-box*/ {
     width: 580px;
 }
 
-.jmv-annotation.level-1 .editor-box, .jmv-annotation.level-1 .insert-box {
+.jmv-annotation.level-1 .editor-box, .jmv-annotation.level-1 /*.insert-box*/ {
     width: 555px;
 }
 
-.jmv-annotation.level-2 .editor-box, .jmv-annotation.level-2 .insert-box {
+.jmv-annotation.level-2 .editor-box, .jmv-annotation.level-2 /*.insert-box*/ {
     width: 530px;
 }
 
-.jmv-annotation.level-3 .editor-box, .jmv-annotation.level-3 .insert-box {
+.jmv-annotation.level-3 .editor-box, .jmv-annotation.level-3 /*.insert-box*/ {
     width: 505px;
 }
 
@@ -144,10 +147,10 @@
     /*margin-top: -5px;*/
 }
 
-.jmv-annotation.edited .insert-box {
+/*.jmv-annotation.edited .insert-box {
     opacity: 0;
     pointer-events: none;
-}
+}*/
 
 .jmv-annotation .ql-editor {
     padding: 0;

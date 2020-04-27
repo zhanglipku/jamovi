@@ -75,12 +75,6 @@ const Annotation = function(address, isTop) {
             <div class="editor-box">
                 <div class="editor jmv-note-theme"></div>
             </div>
-            <div class="ignore-html insert-box">
-                <div class="icon"></div>
-                <div class="line-box" style="width: 100%;">
-                    <hr class="line">
-                </div>
-            </div>
         </div>`);
 
         this.$el.on('formula-clicked', (event, blot) => {
@@ -129,9 +123,9 @@ const Annotation = function(address, isTop) {
 
         this._host = this.$el[0];
         this._body = this.$el[0];
-        this._icon = this._body.querySelector('.icon');
-        this._line = this._body.querySelector('.line');
-        this._lineBox = this._body.querySelector('.line-box');
+        //this._icon = this._body.querySelector('.icon');
+        //this._line = this._body.querySelector('.line');
+        //this._lineBox = this._body.querySelector('.line-box');
         this.ql_editor = this._body.querySelector('.ql-editor');
 
         this._backgroundClicked = this._backgroundClicked.bind(this);
