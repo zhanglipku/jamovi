@@ -65,6 +65,7 @@
     transition: 0.2s background-color;
     border-radius: 8px;
     overflow: hidden;
+    visibility: hidden ;
 }
 
 #results:not(.analysis-selected):not(.edit-focus) .jmv-annotation .line-box {
@@ -77,7 +78,7 @@
 
 
 .jmv-annotation:not(.edited) .editor-box .ql-editor {
-    line-height: 0;
+    /* line-height: 0;*/
 }
 
 
@@ -135,12 +136,12 @@
 
 .jmv-annotation.edited .editor-box {
     opacity: 1;
-    padding-top: 10px;
-    padding-bottom: 10px;
+    /*padding-top: 10px;
+    padding-bottom: 10px;*/
     padding-left: 10px;
     padding-right: 10px;
     margin-left: -10px;
-    margin-top: -5px;
+    /*margin-top: -5px;*/
 }
 
 .jmv-annotation.edited .insert-box {
@@ -150,7 +151,11 @@
 
 .jmv-annotation .ql-editor {
     padding: 0;
-    transition: 0.2s line-height;
+}
+
+.jmv-annotation .ql-editor:not(.ql-blank) {
+    padding-top: 10px ;
+    padding-bottom: 10px ;
 }
 
 .jmv-annotation .ql-container {
