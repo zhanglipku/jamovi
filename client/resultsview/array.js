@@ -161,7 +161,7 @@ const ArrayView = Elem.View.extend({
 
             $el.appendTo(this.$container);
 
-            if (element.name)
+            if (this.model.attributes.element.layout !== 1 && element.name)
                 this._insertAnnotation(child.address(), this.level, false);
         }
 

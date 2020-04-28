@@ -130,7 +130,8 @@ https://github.com/quilljs/quill/issues/1157
 
 .jmv-annotation .ql-editor pre.ql-syntax {
     padding: 5px 5px 5px 10px;
-    border: 1px dashed grey;
+    border: 1px solid #CCCCCC;
+    background-color: #FAFAFA;
     border-radius: 5px;
     margin-top: 12px;
     overflow: auto;
@@ -165,6 +166,7 @@ https://github.com/quilljs/quill/issues/1157
   color: #444;
   padding: 5px 12px;
   white-space: nowrap;
+  z-index: 10;
 }
 .jmv-note-theme .ql-tooltip::before {
   content: "Visit URL:";
@@ -178,7 +180,7 @@ https://github.com/quilljs/quill/issues/1157
   height: 26px;
   margin: 0px;
   padding: 3px 5px;
-  width: 170px;
+  width: 270px;
 }
 .jmv-note-theme .ql-tooltip a.ql-preview {
   display: inline-block;
@@ -220,4 +222,12 @@ https://github.com/quilljs/quill/issues/1157
 }
 .jmv-note-theme .ql-tooltip[data-mode=video]::before {
   content: "Enter video:";
+}
+
+.jmv-note-theme .ql-tooltip[data-mode=link] .ql-help {
+    display: none;
+}
+
+.jmv-note-theme .ql-tooltip[data-mode=video] .ql-help {
+    display: none;
 }
