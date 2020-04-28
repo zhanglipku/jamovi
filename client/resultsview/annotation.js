@@ -120,12 +120,15 @@ const Annotation = function(address, isTop) {
         };
 
         this.editor.theme.tooltip.preview.addEventListener('click', (event) => {
-            console.log('damo!!!!!!!!');
+            window.openUrl(event.currentTarget.href);
         });
 
-        /*this.editor.theme.tooltip.append(`<a class="ql-help" rel="noopener noreferrer" target="_blank" href="jamovi.org" style="
-    margin-left: 20px;
-">Help</a>`)*/
+        let $formulaHelp = $(`<a class="ql-help" rel="noopener noreferrer" target="_blank" href="https://katex.org/docs/supported.html" style="margin-left: 20px;">Help</a>`)
+        $formulaHelp.on('click', (event) => {
+            window.openUrl('https://katex.org/docs/supported.html');
+        });
+
+        this.editor.theme.tooltip.root.append($formulaHelp[0]);
 
         this.editor.theme.tooltip.textbox.addEventListener('focus', (event) => this.cancelBlur());
 
