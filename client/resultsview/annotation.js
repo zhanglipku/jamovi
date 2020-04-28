@@ -200,9 +200,7 @@ const Annotation = function(address, isTop) {
 
     this._event = function(eventName, range, oldRange, source) {
         if (eventName === 'selection-change') {
-            if (source === 'user')
-                this.lastSelection = this.editor.getSelection();
-                
+
             if (range === null)
                 this._blurred();
             else
@@ -217,6 +215,8 @@ const Annotation = function(address, isTop) {
     this._blurred = function(e) {
         if (this.isFocused === false || this.finaliseBlur)
             return;
+
+        this.lastSelection = this.editor.getSelection();
 
         this.finaliseBlur = setTimeout(() => {
             this.isFocused = false;
