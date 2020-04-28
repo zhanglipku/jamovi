@@ -119,13 +119,15 @@ const Annotation = function(address, isTop) {
             this.editor.focus();
         };
 
+        this.editor.theme.tooltip.preview.addEventListener('click', (event) => {
+            console.log('damo!!!!!!!!');
+        });
+
         this.editor.theme.tooltip.textbox.addEventListener('focus', (event) => this.cancelBlur());
 
         this._host = this.$el[0];
         this._body = this.$el[0];
-        //this._icon = this._body.querySelector('.icon');
-        //this._line = this._body.querySelector('.line');
-        //this._lineBox = this._body.querySelector('.line-box');
+
         this.ql_editor = this._body.querySelector('.ql-editor');
 
         this._backgroundClicked = this._backgroundClicked.bind(this);
@@ -198,6 +200,9 @@ const Annotation = function(address, isTop) {
 
     this._event = function(eventName, range, oldRange, source) {
         if (eventName === 'selection-change') {
+            if (source === 'user')
+                this.lastSelection = this.editor.getSelection();
+                
             if (range === null)
                 this._blurred();
             else
@@ -296,6 +301,8 @@ const Annotation = function(address, isTop) {
 
     this.processToolbarAction = function(action) {
         this.editor.focus();
+        if (this.lastSelection)
+            this.editor.setSelection(this.lastSelection.index, this.lastSelection.length);
         this.cancelBlur();
 
         switch (action.type) {
