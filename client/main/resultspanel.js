@@ -765,7 +765,7 @@ const ResultsPanel = Backbone.View.extend({
             let event = {
                 type: 'selected',
                 data: {
-                    state: resource.id === resourceId
+                    state: resourceId === null ? null : resource.id === resourceId
                 }
             };
 

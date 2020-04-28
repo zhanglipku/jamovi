@@ -15,11 +15,12 @@
 
 .jmv-annotation {
     position: relative;
-    transition: .2s height;
+    transition: .2s height, .2s background-color, .2s border-color;
     color: #3E6DA9;
     background-color: #ecf3fb;
     margin-top: 3px;
     margin-bottom: 3px;
+    border-bottom: 1px dashed transparent;
 }
 
 /*.jmv-annotation .insert-box:hover .line {
@@ -62,20 +63,24 @@
     background-color: transparent;
 }
 
-.jmv-annotation .line-box {
+#results.edit-state.edit-focus .jmv-annotation:not(.focused):not(.edited) {
+    border-bottom: 1px dashed #aeaeae;
+}
+
+/*.jmv-annotation .line-box {
     background-color: #ecf3fb;
     transition: 0.2s background-color;
     border-radius: 8px;
     overflow: hidden;
     visibility: hidden ;
-}
+}*/
 
-#results.edit-state:not(.analysis-selected):not(.edit-focus) .jmv-annotation /*.line-box*/ {
+#results.edit-state:not(.analysis-selected):not(.edit-focus):not(.no-analysis-selected) .jmv-annotation /*.line-box*/ {
     background-color: #cddae8;
 }
 
-#results.edit-state.analysis-selected .jmv-annotation:hover /*.line-box:hover*/ {
-    background-color: #cddae8;
+#results.edit-state.analysis-selected .jmv-annotation:not(.focused):hover /*.line-box:hover*/ {
+    background-color: #d2e3f3;
 }
 
 
@@ -130,7 +135,7 @@
 }
 
 #results.edit-state.analysis-selected .jmv-annotation .editor-box:hover {
-    background-color: #cddae8;
+    background-color: #d2e3f3;
 }
 
 #results.edit-state.analysis-selected .jmv-annotation.focused .editor-box {
@@ -154,6 +159,7 @@
 
 .jmv-annotation .ql-editor {
     padding: 0;
+    transition: 0.2s padding;
 }
 
 .jmv-annotation .ql-editor:not(.ql-blank) {

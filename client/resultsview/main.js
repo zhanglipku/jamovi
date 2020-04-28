@@ -122,10 +122,15 @@ class Main {  // this is constructed at the bottom
         else if (hostEvent.type === 'selected') {
             this._analysisSelected = eventData.state;
             if (this.$results) {
-                if (this._analysisSelected)
-                    this.$results.addClass('analysis-selected');
-                else
-                    this.$results.removeClass('analysis-selected');
+                if (this._analysisSelected === null)
+                    this.$results.addClass('no-analysis-selected');
+                else {
+                    this.$results.removeClass('no-analysis-selected');
+                    if (this._analysisSelected)
+                        this.$results.addClass('analysis-selected');
+                    else
+                        this.$results.removeClass('analysis-selected');
+                }
             }
         }
         else if (hostEvent.type === 'click') {
@@ -271,14 +276,21 @@ class Main {  // this is constructed at the bottom
                 this.$results.addClass('edit-focus');
             else
                 this.$results.removeClass('edit-focus');
+
             if (this._annotationState)
                 this.$results.addClass('edit-state');
             else
                 this.$results.removeClass('edit-state');
-            if (this._analysisSelected)
-                this.$results.addClass('analysis-selected');
-            else
-                this.$results.removeClass('analysis-selected');
+                
+            if (this._analysisSelected === null)
+                this.$results.addClass('no-analysis-selected');
+            else {
+                this.$results.removeClass('no-analysis-selected');
+                if (this._analysisSelected)
+                    this.$results.addClass('analysis-selected');
+                else
+                    this.$results.removeClass('analysis-selected');
+            }
         }
     }
 
