@@ -123,6 +123,10 @@ const Annotation = function(address, isTop) {
             console.log('damo!!!!!!!!');
         });
 
+        /*this.editor.theme.tooltip.append(`<a class="ql-help" rel="noopener noreferrer" target="_blank" href="jamovi.org" style="
+    margin-left: 20px;
+">Help</a>`)*/
+
         this.editor.theme.tooltip.textbox.addEventListener('focus', (event) => this.cancelBlur());
 
         this._host = this.$el[0];
@@ -203,8 +207,10 @@ const Annotation = function(address, isTop) {
 
             if (range === null)
                 this._blurred();
-            else
+            else {
+                this.lastSelection = this.editor.getSelection();
                 this._fireEvent('annotation-formats', this.editor.getFormat());
+            }
         }
 
         if (eventName === 'text-change' && source === 'user') {
@@ -215,8 +221,6 @@ const Annotation = function(address, isTop) {
     this._blurred = function(e) {
         if (this.isFocused === false || this.finaliseBlur)
             return;
-
-        this.lastSelection = this.editor.getSelection();
 
         this.finaliseBlur = setTimeout(() => {
             this.isFocused = false;
