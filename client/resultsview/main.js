@@ -75,10 +75,14 @@ class Main {  // this is constructed at the bottom
     _reallyNotifyResize() {
         let width  = this.$results.width()  + 40;
         let height = this.$results.height() + 25;
+        let scrollIntoView = true;
+        let $focusedAnnotations = $('.jmv-annotation.focused');
+        if ($focusedAnnotations.length > 0)
+            scrollIntoView = false;
 
         this.mainWindow.postMessage({
             type : 'sizeChanged',
-            data : { width: width, height: height }}, '*');
+            data : { width: width, height: height, scrollIntoView: scrollIntoView }}, '*');
     }
 
     _sendMenuRequest(event) {
@@ -281,7 +285,7 @@ class Main {  // this is constructed at the bottom
                 this.$results.addClass('edit-state');
             else
                 this.$results.removeClass('edit-state');
-                
+
             if (this._analysisSelected === null)
                 this.$results.addClass('no-analysis-selected');
             else {

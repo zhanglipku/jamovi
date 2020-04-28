@@ -395,7 +395,7 @@ const ResultsPanel = Backbone.View.extend({
                         $iframe.width(width);
 
                     let selected = this.model.get('selectedAnalysis');
-                    if (selected !== null && selected.id.toString() === id)
+                    if (eventData.scrollIntoView && selected !== null && selected.id.toString() === id)
                         this._scrollIntoView($container, height);
                     $iframe.width(width);
                     $iframe.height(height);
