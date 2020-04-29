@@ -83,7 +83,12 @@ const GroupView = Elem.View.extend({
         let elements = this.model.attributes.element.elements;
         let options = this.model.attributes.options;
 
-        this._insertAnnotation(this.address(), this.level, true);
+        let childOfSelectList = false;
+        if (this.parent && this.parent.hasAnnotations)
+            childOfSelectList = this.parent.hasAnnotations() === false;
+
+        if (this.model.attributes.title !== '' && ! childOfSelectList)
+            this._insertAnnotation(this.address(), this.level, true);
 
         for (let i = 0; i < elements.length; i++) {
             let element = elements[i];
@@ -101,7 +106,7 @@ const GroupView = Elem.View.extend({
                 $el.appendTo(this.$container);
                 $('<br>').appendTo(this.$container);
 
-                if (element.name)
+                if ((! child.hasAnnotations || child.hasAnnotations()) && element.name)
                     this._insertAnnotation(child.address(), this.level, false);
 
                 promises.push(child);

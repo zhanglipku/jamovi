@@ -224,10 +224,10 @@ https://github.com/quilljs/quill/issues/1157
   content: "Enter video:";
 }
 
-.jmv-note-theme .ql-tooltip[data-mode=link] .ql-help {
+.jmv-note-theme .ql-tooltip .ql-help {
     display: none;
 }
 
-.jmv-note-theme .ql-tooltip[data-mode=video] .ql-help {
-    display: none;
+.jmv-note-theme .ql-tooltip[data-mode=formula] .ql-help {
+    display: inline;
 }

@@ -107,6 +107,9 @@ const ArrayView = Elem.View.extend({
 
         return null;
     },
+    hasAnnotations: function() {
+        return this.model.attributes.title !== '' && ( ! this.model.attributes.element.hideHeadingOnlyChild || this.model.attributes.element.elements.length > 1);
+    },
     render: function() {
 
         Elem.View.prototype.render.call(this);
@@ -133,7 +136,8 @@ const ArrayView = Elem.View.extend({
         if ( ! valid && elements.length > 0)
             selected = elements[elements.length - 1].name;
 
-        this._insertAnnotation(this.address(), this.level, true);
+        if (this.hasAnnotations() && this.model.attributes.element.layout !== 1)
+            this._insertAnnotation(this.address(), this.level, true);
 
         for (let element of elements) {
             if (element.visible === 1 || element.visible === 3)
@@ -161,7 +165,7 @@ const ArrayView = Elem.View.extend({
 
             $el.appendTo(this.$container);
 
-            if (this.model.attributes.element.layout !== 1 && element.name)
+            if ((! child.hasAnnotations || child.hasAnnotations()) && this.model.attributes.element.layout !== 1 && element.name)
                 this._insertAnnotation(child.address(), this.level, false);
         }
 
