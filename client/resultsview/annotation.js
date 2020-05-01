@@ -208,7 +208,11 @@ const Annotation = function(address, isTop) {
     };
 
     this.setContents = function(contents) {
-        this.editor.setContents(contents);
+        if (contents === null)
+            this.editor.setContents([]);
+        else
+            this.editor.setContents(contents);
+            
         let length = this.editor.getLength();
         if (length <= 1)
             this._host.classList.remove('edited');
@@ -258,10 +262,14 @@ const Annotation = function(address, isTop) {
     };
 
     this.storeContents = function() {
+        let contents = null;
+        if (this.isEmpty() === false)
+            contents = this.getContents();
+
         if (this.isTop)
-            window.setParam(this.address, { 'topText': this.getContents() });
+            window.setParam(this.address, { 'topText': contents });
         else
-            window.setParam(this.address, { 'bottomText': this.getContents() });
+            window.setParam(this.address, { 'bottomText': contents });
     };
 
     this._focused = function(e) {

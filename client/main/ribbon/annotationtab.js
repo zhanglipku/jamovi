@@ -154,7 +154,7 @@ const DataTab = function() {
                 new RibbonSeparator(),
                 new RibbonGroup({ title: 'Styles', margin: 'large', items: [
                     new RibbonButton({ title: 'Code-Block', name: 'textCodeBlock', margin: 'large', size: 'large', icon: Icons['code-block'] }),
-                    new RibbonButton({ title: 'H2', name: 'textH2', margin: 'large', size: 'large', icon: Icons.header['2'] }),
+                    new RibbonButton({ title: 'Heading', name: 'textH2', margin: 'large', size: 'large', icon: Icons.header['2'] }),
                     //new RibbonButton({ title: 'Clear', name: 'textClear', margin: 'large', size: 'large', icon: Icons.clean }),
                     new RibbonButton({ title: 'Link', name: 'textLink', margin: 'large', size: 'large', icon: Icons.link })
                 ]})
