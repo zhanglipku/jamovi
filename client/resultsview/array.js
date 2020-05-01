@@ -136,15 +136,23 @@ const ArrayView = Elem.View.extend({
         if ( ! valid && elements.length > 0)
             selected = elements[elements.length - 1].name;
 
+        let level = this.level;
+        if (this.model.attributes.element.layout === 1) {
+            level = this.level-1;
+            if (this.model.attributes.element.hideHeadingOnlyChild && this.model.attributes.element.elements.length === 1)
+                level = this.level-2;
+        }
+
         if (this.hasAnnotations() && this.model.attributes.element.layout !== 1)
-            this._insertAnnotation(this.address(), this.level, true);
+            this._insertAnnotation(this.address(), level, true);
 
         for (let element of elements) {
             if (element.visible === 1 || element.visible === 3)
                 continue;
 
             let $el = $('<div></div>');
-            let child = this.create(element, options, $el, this.level+1, this, this.mode, undefined, this.fmt, this.model.attributes.refTable);
+
+            let child = this.create(element, options, $el, level+1, this, this.mode, undefined, this.fmt, this.model.attributes.refTable);
             if (child === null)
                 continue;
 
@@ -166,7 +174,7 @@ const ArrayView = Elem.View.extend({
             $el.appendTo(this.$container);
 
             if ((! child.hasAnnotations || child.hasAnnotations()) && this.model.attributes.element.layout !== 1 && element.name)
-                this._insertAnnotation(child.address(), this.level, false);
+                this._insertAnnotation(child.address(), level, false);
         }
 
         this.ready = Promise.all(promises);

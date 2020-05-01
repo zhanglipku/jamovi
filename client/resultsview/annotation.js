@@ -70,6 +70,7 @@ const Annotation = function(address, isTop) {
         this.address = address;
         this.isTop = isTop;
         this.isFocused = false;
+        this.lastSelection = null;
 
         this.$el = $(`<div class="jmv-annotation body">
             <div class="editor-box">
@@ -125,7 +126,7 @@ const Annotation = function(address, isTop) {
             event.preventDefault();
         });
 
-        let $formulaHelp = $(`<a class="ql-help" rel="noopener noreferrer" target="_blank" href="https://katex.org/docs/supported.html" style="margin-left: 20px;">Help</a>`)
+        let $formulaHelp = $(`<a class="ql-help" rel="noopener noreferrer" target="_blank" href="https://katex.org/docs/supported.html" style="margin-left: 20px;">Help</a>`);
         $formulaHelp.on('click', (event) => {
             window.openUrl('https://katex.org/docs/supported.html');
             event.stopPropagation();
@@ -181,13 +182,23 @@ const Annotation = function(address, isTop) {
 
         this.editor.root.removeEventListener('blur', this._blurEvent);
 
+        if (this.isFocused) {
+            this.isFocused = false;
+            this._host.classList.remove('focused');
+            let length = this.editor.getLength();
+            if (length <= 1)
+                this._host.classList.remove('edited');
+            this.finaliseBlur = null;
+            this._fireEvent('annotation-lost-focus');
+        }
+
         this.$el.detach();
         this.setup(0);
         this.attached = false;
     };
 
     this.setup = function(level) {
-        this.$el.addClass('level-' + level);
+        this.$el.attr('level', level);
 
         this.level = level;
     };
@@ -238,15 +249,19 @@ const Annotation = function(address, isTop) {
                 this._host.addEventListener('click', this._backgroundClicked);
             }
 
-            if (this.isTop)
-                window.setParam(this.address, { 'topText': this.getContents() });
-            else
-                window.setParam(this.address, { 'bottomText': this.getContents() });
+            this.storeContents();
 
             this.finaliseBlur = null;
             this._host.classList.remove('focused');
             this._fireEvent('annotation-lost-focus');
         }, 200);
+    };
+
+    this.storeContents = function() {
+        if (this.isTop)
+            window.setParam(this.address, { 'topText': this.getContents() });
+        else
+            window.setParam(this.address, { 'bottomText': this.getContents() });
     };
 
     this._focused = function(e) {
@@ -277,6 +292,21 @@ const Annotation = function(address, isTop) {
 
         if (text !== undefined && text !== '' && this.isEmpty())
             this.editor.insertText(0, text, { });
+    };
+
+    this.refocus = function() {
+        if (this.hasFocus() === false)
+            this.focus();
+
+        this.editor.setSelection(this.lastSelection);
+    };
+
+    this.blur = function() {
+        this.editor.blur();
+    };
+
+    this.hasFocus = function() {
+        return this.editor.hasFocus() || (this.isFocused === true && this.finaliseBlur === null);
     };
 
     this._fireEvent = function(name, data) {
@@ -397,17 +427,21 @@ Annotation.attachControl = function(toElement, address, levelIndex, isTop) {
         }
     }
 
+    let newCtrl = false;
     if (control === null) {
         control = new Annotation(address, isTop);
         Annotation.controls.push(control);
+        newCtrl = true;
     }
 
     control.setup(levelIndex);
     control.attach();
 
-    let delta = window.getParam(address, isTop ? 'topText' : 'bottomText');
-    if (delta)
-        control.setContents(delta);
+    if (newCtrl) {
+        let delta = window.getParam(address, isTop ? 'topText' : 'bottomText');
+        if (delta)
+            control.setContents(delta);
+    }
 
     toElement.appendChild(control.$el[0]);
 

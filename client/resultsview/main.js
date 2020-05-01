@@ -217,13 +217,42 @@ class Main {  // this is constructed at the bottom
         }
     }
 
+    refocusAnnotation() {
+        if (this.focusedAnnotation === null || this.focusedAnnotation.attached === false) {
+            this._annotationFocused = false;
+            this._updateAnnotationStates();
+            if (this.focusedAnnotation) {
+                let y = document.activeElement;
+                //this.focusedAnnotation.blur();
+                this.focusedAnnotation = null;
+            }
+        }
+        else if (this.focusedAnnotation.attached)
+            this.focusedAnnotation.refocus();
+    }
+
+    getFocusedAnnotation() {
+        for (let ctrl of Annotation.controls) {
+            if (ctrl.attached && ctrl.hasFocus()) {
+                this.focusedAnnotation = ctrl;
+                this.focusedAnnotation.storeContents();
+                return;
+            }
+        }
+        this.focusedAnnotation = null;
+    }
+
     _render() {
+        this.getFocusedAnnotation();
+
         Annotation.detach();
 
         this.$body.attr('data-mode', this.resultsDefn.mode);
         this.$body.empty();
         this.$body.off('annotation-editing');
         this.$body.off('annotation-lost-focus');
+        this.$body.off('annotation-formats');
+        this.$body.off('annotation-changed');
 
         this._refTable = new RefTable();
         this._refTable.setup(this.resultsDefn.refs, this.resultsDefn.refsMode);
@@ -272,6 +301,10 @@ class Main {  // this is constructed at the bottom
                 this._notifyResize();
             });
         });
+
+        setTimeout(() => {
+            this.refocusAnnotation();
+        }, 0);
     }
 
     _updateAnnotationStates() {

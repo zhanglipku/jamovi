@@ -39,19 +39,19 @@
     min-height: 0px;
 }
 
-.jmv-annotation.level-0 .editor-box, .jmv-annotation.level-0 {
+.jmv-annotation[level='0'] .editor-box, .jmv-annotation[level='0'] {
     width: 580px;
 }
 
-.jmv-annotation.level-1 .editor-box, .jmv-annotation.level-1 {
+.jmv-annotation[level='1'] .editor-box, .jmv-annotation[level='1'] {
     width: 555px;
 }
 
-.jmv-annotation.level-2 .editor-box, .jmv-annotation.level-2 {
+.jmv-annotation[level='2'] .editor-box, .jmv-annotation[level='2'] {
     width: 530px;
 }
 
-.jmv-annotation.level-3 .editor-box, .jmv-annotation.level-3 {
+.jmv-annotation[level='3'] .editor-box, .jmv-annotation[level='3'] {
     width: 505px;
 }
 
