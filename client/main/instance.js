@@ -61,7 +61,8 @@ const Instance = Backbone.Model.extend({
         title : '',
         blank : false,
         resultsSupplier: null,
-        arbitraryCodePresent: false
+        arbitraryCodePresent: false,
+        editState: false
     },
     instanceId() {
         return this._instanceId;

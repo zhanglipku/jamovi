@@ -88,6 +88,16 @@ Analysis.prototype.setResults = function(res) {
         this._parent._notifyResultsChanged(this);
 };
 
+Analysis.prototype.updateHeading = function(values) {
+    let heading = this.options.getHeading();
+    if (this.deleted === false && this._parent !== null)
+        this._parent._notifyHeadingChanged(this);
+};
+
+Analysis.prototype.getHeading = function() {
+    return this.options.getHeading();
+};
+
 Analysis.prototype.setOptions = function(values) {
     if (this.options.setValues(values)) {
         this.enabled = true;
@@ -224,6 +234,9 @@ const Analyses = Backbone.Model.extend({
     },
     _notifyOptionsChanged(analysis) {
         this.trigger('analysisOptionsChanged', analysis);
+    },
+    _notifyHeadingChanged(analysis) {
+        this.trigger('analysisHeadingChanged', analysis);
     },
 });
 

@@ -24,6 +24,7 @@ const ResultsPanel = Backbone.View.extend({
         this.el.innerHTML = '';
         this.el.classList.add('jmv-results-panel');
         this.el.dataset.mode = args.mode;
+        this.annotationFocus = 0;
 
         this._menuId = null;
         ContextMenu.$el.on('menuClicked', (event, button) => {
@@ -95,6 +96,7 @@ const ResultsPanel = Backbone.View.extend({
         this.model.settings().on('change:format',  () => this._updateAll());
         this.model.settings().on('change:devMode', () => this._updateAll());
         this.model.settings().on('change:refsMode', () => this._updateRefsMode());
+        this.model.on('change:editState', () => this._updateEditState());
     },
     _updateRefsMode() {
         if ( ! this._ready)
@@ -182,6 +184,7 @@ const ResultsPanel = Backbone.View.extend({
             $iframe.on('load', () => {
                 this._sendResults(resources);
                 resources.loaded = true;
+                this._sendSelected(analysis.id);
             });
 
             $cover.on('click', event => this._resultsClicked(event, analysis));
@@ -365,6 +368,25 @@ const ResultsPanel = Backbone.View.extend({
             let options = { };
 
             switch (eventType) {
+                case 'annotationChanged':
+                    this.model.set('edited', true);
+                    this.$el.trigger('annotationChanged');
+                    break;
+                case 'annotationFocus':
+                    this.annotationGotFocus();
+                    this.$el.trigger('annotationFocus');
+                    break;
+                case 'annotationLostFocus':
+                    this.annotationLostFocus();
+                    this.$el.trigger('annotationLostFocus');
+                    break;
+                case 'annotationFormats':
+                    this.$el.trigger('annotationFormats', eventData);
+                    break;
+                case 'headingChanged':
+                    this.$el.trigger('headingChanged', eventData);
+                    analysis.updateHeading();
+                    break;
                 case 'sizeChanged':
                     let height = eventData.height;
                     let width = eventData.width;
@@ -377,7 +399,7 @@ const ResultsPanel = Backbone.View.extend({
                         $iframe.width(width);
 
                     let selected = this.model.get('selectedAnalysis');
-                    if (selected !== null && selected.id.toString() === id)
+                    if (eventData.scrollIntoView && selected !== null && selected.id.toString() === id)
                         this._scrollIntoView($container, height);
                     $iframe.width(width);
                     $iframe.height(height);
@@ -549,6 +571,15 @@ const ResultsPanel = Backbone.View.extend({
                 this.model.trigger('notification', note);
             });
         }
+        else if (event.op === 'add note') {
+            let address = event.address.slice(); // clone
+            let id = address.shift();
+            let iframeWindow = this.resources[id].iframe.contentWindow;
+            let options = {
+                text: '^ '
+            };
+            iframeWindow.postMessage({ type: 'addNote', data: { address, options } }, '*');
+        }
         else if (event.op === 'export') {
 
             let part = flatten(event.address);
@@ -718,11 +749,131 @@ const ResultsPanel = Backbone.View.extend({
                 this._refsTable.deselect();
                 delete this._refsTable.dataset.selected;
             }
+            this._sendSelected(newSelected.id);
         }
         else {
+            this._sendSelected(null);
             this.$el.removeAttr('data-analysis-selected');
         }
-    }
+    },
+    _sendSelected(resourceId) {
+        for (let id in this.resources) {
+            let resource = this.resources[id];
+            if (resource === undefined)
+                continue;
+            if (resource.analysis.deleted)
+                continue;
+            if (resource.loaded === false)
+                continue;
+
+            let event = {
+                type: 'selected',
+                data: {
+                    state: resourceId === null ? null : resource.id === resourceId
+                }
+            };
+
+            resource.iframe.contentWindow.postMessage(event, this.iframeUrl);
+        }
+    },
+    annotationGotFocus() {
+        this.annotationFocus += 1;
+        if (this.annotationFocus === 1) {
+
+            let event = {
+                type: 'annotationEvent',
+                data: {
+                    type: 'editFocused',
+                    state: true
+                }
+            };
+
+            for (let id in this.resources) {
+                let resources = this.resources[id];
+                if (resources === undefined)
+                    continue;
+                if (resources.analysis.deleted)
+                    continue;
+                if (resources.loaded === false)
+                    continue;
+
+                resources.iframe.contentWindow.postMessage(event, this.iframeUrl);
+            }
+        }
+
+    },
+    annotationLostFocus() {
+        this.annotationFocus -= 1;
+        if (this.annotationFocus === 0) {
+
+            let event = {
+                type: 'annotationEvent',
+                data: {
+                    type: 'editFocused',
+                    state: false
+                }
+            };
+
+            for (let id in this.resources) {
+                let resources = this.resources[id];
+                if (resources === undefined)
+                    continue;
+                if (resources.analysis.deleted)
+                    continue;
+                if (resources.loaded === false)
+                    continue;
+
+                resources.iframe.contentWindow.postMessage(event, this.iframeUrl);
+            }
+        }
+        else if (this.annotationFocus < 0)
+            throw "shouldn't get here";
+    },
+    _updateEditState() {
+        let event = {
+            type: 'annotationEvent',
+            data: {
+                type: 'editState',
+                state: this.model.get('editState')
+            }
+        };
+        for (let id in this.resources) {
+            let resources = this.resources[id];
+            if (resources === undefined)
+                continue;
+            if (resources.analysis.deleted)
+                continue;
+            if (resources.loaded === false)
+                continue;
+
+            resources.iframe.contentWindow.postMessage(event, this.iframeUrl);
+        }
+    },
+    annotationAction(action) {
+        let event = {
+            type: 'annotationEvent',
+            data: {
+                type: 'action',
+                action: action
+            }
+        };
+
+        for (let id in this.resources) {
+            let resources = this.resources[id];
+            if (resources === undefined)
+                continue;
+            if (resources.analysis.deleted)
+                continue;
+            if (resources.loaded === false)
+                continue;
+
+            let attr = resources.$container.attr('data-selected');
+            if (attr !== undefined && attr !== false) {
+                resources.iframe.contentWindow.postMessage(event, this.iframeUrl);
+                break;
+            }
+        }
+    },
 });
 
 module.exports = ResultsPanel;

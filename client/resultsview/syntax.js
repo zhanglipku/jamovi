@@ -31,6 +31,8 @@ var SyntaxView = Elem.View.extend({
         if (this.model === null)
             this.model = new SyntaxModel();
 
+        this.$syntax = $('<pre class="jmv-results-syntax-text"></pre>').appendTo(this.$el);
+
         this.render();
     },
     type: function() {
@@ -39,14 +41,19 @@ var SyntaxView = Elem.View.extend({
     render: function() {
 
         let syntax = this.model.attributes.element;
-        let $syntax = $('<pre class="jmv-results-syntax-text"></pre>').appendTo(this.$el);
-        $syntax.text(syntax);
+        this.$syntax.text(syntax);
 
         if (this.model.attributes.title)
             this.$title.text(this.model.attributes.title);
+        else
+            this.$title.empty();
 
         if (this.model.attributes.stale)
-            $syntax.addClass('stale');
+            this.$syntax.addClass('stale');
+        else
+            this.$syntax.removeClass('stale');
+
+        return true;
     }
 });
 

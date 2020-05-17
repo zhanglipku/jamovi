@@ -11,7 +11,8 @@ const RefTable = require('./refs');
 const createItem = require('./create').createItem;
 const formatIO = require('../common/utils/formatio');
 const b64 = require('../common/utils/b64');
-
+const Annotations = require('./annotations');
+const Tracker = require('./itemtracker');
 
 class Main {  // this is constructed at the bottom
 
@@ -21,6 +22,11 @@ class Main {  // this is constructed at the bottom
         this.$results = null;
         this.resultsDefn = null;
         this.active = null;
+        this._focus = 0;
+        this._annotationFocused = false;
+        this._annotationState = false;
+
+        this.layout = new Tracker();
 
         window.addEventListener('message', event => this._messageEvent(event));
 
@@ -36,6 +42,12 @@ class Main {  // this is constructed at the bottom
             this.mainWindow.postMessage({
                 type : 'setParam',
                 data : { address, options }}, '*');
+        };
+
+        window.getParam = (address, name) => {
+            let optionName = 'results/' + address.join('/') + '/' + name;
+            if (optionName in this.resultsDefn.options)
+                return this.resultsDefn.options[optionName];
         };
 
         window.openUrl = (url) => {
@@ -63,10 +75,14 @@ class Main {  // this is constructed at the bottom
     _reallyNotifyResize() {
         let width  = this.$results.width()  + 40;
         let height = this.$results.height() + 25;
+        let scrollIntoView = true;
+        let $focusedAnnotations = $('.jmv-annotation.focused');
+        if ($focusedAnnotations.length > 0)
+            scrollIntoView = false;
 
         this.mainWindow.postMessage({
             type : 'sizeChanged',
-            data : { width: width, height: height }}, '*');
+            data : { width: width, height: height, scrollIntoView: scrollIntoView }}, '*');
     }
 
     _sendMenuRequest(event) {
@@ -77,6 +93,15 @@ class Main {  // this is constructed at the bottom
 
         let lastEntry = entries[entries.length-1];
         this._menuEvent({ type: 'activated', address: lastEntry.address });
+    }
+
+    _sendAnnotationRequest(name, data) {
+        let event = {
+            type: name,
+            data: data
+        };
+
+        this.mainWindow.postMessage(event, '*');
     }
 
     _messageEvent(event) {
@@ -98,6 +123,20 @@ class Main {  // this is constructed at the bottom
             if (this._refTable)
                 this._refTable.setup(eventData.refs, eventData.refsMode);
         }
+        else if (hostEvent.type === 'selected') {
+            this._analysisSelected = eventData.state;
+            if (this.$results) {
+                if (this._analysisSelected === null)
+                    this.$results.addClass('no-analysis-selected');
+                else {
+                    this.$results.removeClass('no-analysis-selected');
+                    if (this._analysisSelected)
+                        this.$results.addClass('analysis-selected');
+                    else
+                        this.$results.removeClass('analysis-selected');
+                }
+            }
+        }
         else if (hostEvent.type === 'click') {
             let el = document.elementFromPoint(hostEvent.pageX, hostEvent.pageY);
             if (el === document.body)
@@ -106,6 +145,16 @@ class Main {  // this is constructed at the bottom
             clickEvent.pageX = hostEvent.pageX;
             clickEvent.pageY = hostEvent.pageY;
             $(el).trigger(clickEvent);
+        }
+        else if (hostEvent.type === 'addNote') {
+            let address = eventData.address;
+            let options = eventData.options;
+
+            let annotation = Annotations.getControl(address, false);
+            if (annotation !== null)
+                annotation.focus(options.text);
+
+
         }
         else if (hostEvent.type === 'getcontent') {
 
@@ -163,36 +212,148 @@ class Main {  // this is constructed at the bottom
         else if (hostEvent.type === 'menuEvent') {
             this._menuEvent(eventData);
         }
+        else if (hostEvent.type === 'annotationEvent') {
+            this._annotationEvent(eventData);
+        }
     }
 
     _render() {
-        this.$body.attr('data-mode', this.resultsDefn.mode);
-        this.$body.empty();
+        this.layout.begin();
 
-        this._refTable = new RefTable();
-        this._refTable.setup(this.resultsDefn.refs, this.resultsDefn.refsMode);
+        let current = this.layout.include('root', () => {
+            this.$body.attr('data-mode', this.resultsDefn.mode);
+            this.$body.off('annotation-editing');
+            this.$body.off('annotation-lost-focus');
+            this.$body.off('annotation-formats');
+            this.$body.off('annotation-changed');
 
-        this.$results = $('<div id="results"></div>');
-        this.results = createItem(
-            this.resultsDefn.results,
-            this.resultsDefn.options,
-            this.$results,
-            0,
-            { _sendEvent: event => this._sendMenuRequest(event) },
-            this.resultsDefn.mode,
-            this.resultsDefn.devMode,
-            this.resultsDefn.format,
-            this._refTable);
-        this.$results.appendTo(this.$body);
+            this._refTable = new RefTable();
+            this._refTable.setup(this.resultsDefn.refs, this.resultsDefn.refsMode);
 
-        this.$selector = $('<div id="selector"></div>').appendTo(this.$body);
+            this.$results = $('<div id="results"></div>');
+            this._updateAnnotationStates();
+            this.results = createItem(
+                this.resultsDefn.results,
+                this.resultsDefn.options,
+                this.$results,
+                0,
+                { _sendEvent: event => this._sendMenuRequest(event) },
+                this.resultsDefn.mode,
+                this.resultsDefn.devMode,
+                this.resultsDefn.format,
+                this._refTable);
+            this.$results.appendTo(this.$body);
 
-        $(document).ready(() => {
-            let erd = ERDM({ strategy: 'scroll' });
-            erd.listenTo(this.$results[0], (element) => {
-                this._notifyResize();
+            this.$selector = $('<div id="selector"></div>').appendTo(this.$body);
+
+            this.$body.on('annotation-editing', (event) => {
+                this._focus += 1;
+                if (this._focus === 1)
+                    this._sendAnnotationRequest('annotationFocus', event.annotationData);
             });
+
+            this.$body.on('annotation-lost-focus', (event) => {
+                this._focus -= 1;
+                if (this._focus === 0)
+                    this._sendAnnotationRequest('annotationLostFocus', event.annotationData);
+                else if (this._focus < 0)
+                    throw "shouldn't get here";
+            });
+
+            this.$body.on('heading-changed', (event) => {
+                this._sendAnnotationRequest('headingChanged', event.headingData);
+            });
+
+            this.$body.on('annotation-formats', (event, data) => {
+                this._sendAnnotationRequest('annotationFormats', event.detail.annotationData);
+            });
+
+            this.$body.on('annotation-changed', (event) => {
+                this._sendAnnotationRequest('annotationChanged', event.annotationData);
+            });
+
+            $(document).ready(() => {
+                let erd = ERDM({ strategy: 'scroll' });
+                erd.listenTo(this.$results[0], (element) => {
+                    this._notifyResize();
+                });
+            });
+
+            return this.results;
         });
+
+        if (current.updated() === false) {
+            this._updateAnnotationStates();
+            this._refTable.setup(this.resultsDefn.refs, this.resultsDefn.refsMode);
+
+            current.update({
+                mode: this.resultsDefn.mode,
+                devMode: this.resultsDefn.devMode,
+                fmt: this.resultsDefn.format,
+                level: 0,
+                element: this.resultsDefn.results,
+                options: this.resultsDefn.options,
+                refTable: this._refTable
+            });
+        }
+
+        this.layout.end();
+    }
+
+    _updateAnnotationStates() {
+        if (this.$results) {
+            if (this._annotationFocused)
+                this.$results.addClass('edit-focus');
+            else
+                this.$results.removeClass('edit-focus');
+
+            if (this._annotationState)
+                this.$results.addClass('edit-state');
+            else
+                this.$results.removeClass('edit-state');
+
+            if (this._analysisSelected === null)
+                this.$results.addClass('no-analysis-selected');
+            else {
+                this.$results.removeClass('no-analysis-selected');
+                if (this._analysisSelected)
+                    this.$results.addClass('analysis-selected');
+                else
+                    this.$results.removeClass('analysis-selected');
+            }
+        }
+    }
+
+    _annotationEvent(event) {
+        switch (event.type) {
+            case 'editState':
+                this._annotationState = event.state;
+                if (this.$results) {
+                    if (this._annotationState)
+                        this.$results.addClass('edit-state');
+                    else
+                        this.$results.removeClass('edit-state');
+                }
+                break;
+            case 'editFocused':
+                this._annotationFocused = event.state;
+                if (this.$results) {
+                    if (this._annotationFocused)
+                        this.$results.addClass('edit-focus');
+                    else
+                        this.$results.removeClass('edit-focus');
+                }
+                break;
+            case 'action':
+                for (let annotation of Annotations.controls) {
+                    if (annotation.$el.hasClass('had-focus')) {
+                        if (annotation.processToolbarAction)
+                            annotation.processToolbarAction(event.action);
+                        break;
+                    }
+                }
+                break;
+        }
     }
 
     _menuEvent(event) {

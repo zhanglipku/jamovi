@@ -468,6 +468,13 @@ const Options = function(def=[]) {
         return true;
     };
 
+    this.getHeading = function() {
+        let option = this.getOption('results//heading');
+        if (option)
+            return option.getValue();
+        return null;
+    };
+
     this.setValues = function(values, initializeOnly) {
         let changed = false;
         for (let name in values) {

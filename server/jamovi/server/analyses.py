@@ -76,6 +76,7 @@ class Analysis:
             self.enabled = True
         non_passive_changes = self.options.set(options)
         if not non_passive_changes and len(changes) == 0 and not wasnt_but_now_is_enabled:
+            self.results.options.CopyFrom(self.options.as_pb())
             return
         self.complete = False
         if len(changes) > 0:

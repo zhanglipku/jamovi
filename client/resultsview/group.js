@@ -3,6 +3,7 @@
 const $ = require('jquery');
 const Backbone = require('backbone');
 Backbone.$ = $;
+const Annotations = require('./annotations');
 
 const Elem = require('./element');
 
@@ -35,15 +36,23 @@ const GroupView = Elem.View.extend({
         this.devMode = data.devMode;
         this.fmt = data.fmt;
 
-        this.hoTag = '<h'  + (this.level+1) + '>';
-        this.hcTag = '</h' + (this.level+1) + '>';
+        this.hoTag = `<h${ this.level + 1 }>`;
+        this.hcTag = `</h${ this.level + 1 }>`;
 
         this.$el.addClass('jmv-results-group');
 
-        if (this.mode === 'text')
-            this.$title = $(this.hoTag + '# ' + this.model.attributes.title + this.hcTag).prependTo(this.$el);
-        else
-            this.$title = $(this.hoTag + this.model.attributes.title + this.hcTag).prependTo(this.$el);
+        if (this.level === 0 && (this.parent === undefined || this.parent.parent === undefined)) {
+            let annotation = Annotations.create(this.address(), 'heading', this.level, { text: this.model.attributes.title });
+            annotation.$el.prependTo(this.$el);
+        }
+        else {
+            if (this.mode === 'text')
+                this.$title = $(this.hoTag + '# ' + this.model.attributes.title + this.hcTag).prependTo(this.$el);
+            else
+                this.$title = $(this.hoTag + this.model.attributes.title + this.hcTag).prependTo(this.$el);
+            this.$title.prependTo(this.$el);
+        }
+
         this.addIndex++;
 
         this.$container = $('<div class="jmv-results-group-container"></div>');
@@ -82,7 +91,18 @@ const GroupView = Elem.View.extend({
         let elements = this.model.attributes.element.elements;
         let options = this.model.attributes.options;
 
-        for (let element of elements) {
+
+        let childOfSelectList = false;
+        if (this.parent && this.parent.hasAnnotations)
+            childOfSelectList = this.parent.hasAnnotations() === false;
+
+        let current = null;
+        if (this.model.attributes.title !== '' && ! childOfSelectList)
+            current = this._includeAnnotation(current, this.address().join('/'), this, true);
+
+
+        for (let i = 0; i < elements.length; i++) {
+            let element = elements[i];
             if (this.mode === 'rich' && element.name === 'syntax' && element.type === 'preformatted')
                 continue;
             if ( ! this.devMode && element.name === 'debug' && element.type === 'preformatted')
@@ -90,17 +110,78 @@ const GroupView = Elem.View.extend({
             if (element.visible === 1 || element.visible === 3)
                 continue;
 
-            let $el = $('<div></div>');
-            let child = this.create(element, options, $el, this.level+1, this, this.mode, undefined, this.fmt, this.model.attributes.refTable);
-            if (child !== null) {
-                this.children.push(child);
-                $el.appendTo(this.$container);
-                $('<br>').appendTo(this.$container);
-                promises.push(child);
-            }
+            let childAddress = this.address();
+            childAddress.push(element.name);
+            childAddress = childAddress.join('/');
+
+            current = this._includeItem(current, childAddress, element, options);
+
+            if (current === null)
+                continue;
+
+            let updateData = {
+                element: element,
+                options: options,
+                level: this.level + 1,
+                mode: this.mode,
+                fmt: this.fmt,
+                refTable: this.model.attributes.refTable
+            };
+
+            if (current.updated() === false && current.update(updateData) === false)
+                continue;
+
+            let child = current.item;
+            this.children.push(child);
+            promises.push(child);
+
+            current = this._includeBreak(current, childAddress);
+
+            if ((! child.hasAnnotations || child.hasAnnotations()) && element.name)
+                current = this._includeAnnotation(current, childAddress, child, false);
         }
 
         this.ready = Promise.all(promises);
+    },
+    _includeItem(current, childAddress, element, options) {
+        return this.layout.include(childAddress + ':item', () => {
+            let $el = $('<div></div>');
+            let child = this.create(element, options, $el, this.level + 1, this, this.mode, undefined, this.fmt, this.model.attributes.refTable);
+            if (child !== null) {
+                $el.addClass('hidden');
+                if (current === null)
+                    this.$container[0].prepend($el[0]);
+                else
+                    $el.insertAfter(current.$el);
+
+                setTimeout(() => {
+                    $el.removeClass('hidden');
+                }, 200);
+            }
+
+            return child;
+        });
+    },
+    _includeBreak(current, childAddress) {
+        return this.layout.include(childAddress + ':break', () => {
+            return $('<br>').insertAfter(current.$el);
+        });
+    },
+    _includeAnnotation(current, childAddress, item, isTop) {
+        let suffix = isTop ? 'topText' : 'bottomText';
+        return this.layout.include(childAddress + ':' + suffix, (annotation) => {
+            if (annotation)
+                Annotations.activate(annotation, this.level);
+            else
+                annotation = Annotations.create(item.address(), suffix, this.level);
+
+            if (isTop)
+                this.$container[0].prepend(annotation.$el[0]);
+            else
+                annotation.$el.insertAfter(current.$el);
+
+            return annotation;
+        });
     },
     _menuOptions(event) {
         if (this.isRoot())

@@ -2,6 +2,7 @@
 
 const _ = require('underscore');
 const $ = require('jquery');
+const ActionHub = require('./actionhub');
 const Backbone = require('backbone');
 Backbone.$ = $;
 
@@ -39,6 +40,44 @@ const ResultsView = Backbone.View.extend({
         });
 
         this.model.set('resultsSupplier', this);
+
+        ActionHub.get('textUndo').on('request', (source) => this.richView.annotationAction({ type: 'undo', name: '', value: '' }));
+        ActionHub.get('textRedo').on('request', (source) => this.richView.annotationAction({ type: 'redo', name: '', value: '' }));
+        ActionHub.get('textCopy').on('request', (source) => this.richView.annotationAction({ type: 'copy', name: '', value: '' }));
+        ActionHub.get('textPaste').on('request', (source) => this.richView.annotationAction({ type: 'paste', name: '', value: '' }));
+        ActionHub.get('textCut').on('request', (source) => this.richView.annotationAction({ type: 'cut', name: '', value: '' }));
+
+        ActionHub.get('textBold').on('request', (source) => this.richView.annotationAction({ type: 'format', name: 'bold', value: ! source.value }));
+        ActionHub.get('textItalic').on('request', (source) => this.richView.annotationAction({ type: 'format', name: 'italic', value: ! source.value }));
+        ActionHub.get('textUnderline').on('request', (source) => this.richView.annotationAction({ type: 'format', name: 'underline', value: ! source.value }));
+        ActionHub.get('textStrike').on('request', (source) => this.richView.annotationAction({ type: 'format', name: 'strike', value: ! source.value }));
+        ActionHub.get('textSubScript').on('request', (source) => this.richView.annotationAction({ type: 'format', name: 'script', value: source.value ? '' : 'sub' }));
+        ActionHub.get('textSuperScript').on('request', (source) => this.richView.annotationAction({ type: 'format', name: 'script', value: source.value ? '' : 'super' }));
+        ActionHub.get('textColor').on('request', (source) => {
+            if (source.name === 'textColor')
+                this.richView.annotationAction({ type: 'authentication', name: 'textColor', value: '' });
+            else
+                this.richView.annotationAction({ type: 'format', name: 'color', value: source.name === 'tcReset' ? '' : source.title });
+        });
+        ActionHub.get('textBackColor').on('request', (source) => {
+            if (source.name === 'textBackColor')
+                this.richView.annotationAction({ type: 'authentication', name: 'textBackColor', value: '' });
+            else
+                this.richView.annotationAction({ type: 'format', name: 'background', value: source.name === 'bcReset' ? '' : source.title });
+        });
+        ActionHub.get('textH2').on('request', (source) => this.richView.annotationAction({ type: 'format', name: 'header', value: source.value ? '' : 2 }));
+        ActionHub.get('textFormula').on('request', () => this.richView.annotationAction({ type: 'format', name: 'formula', value: '' }));
+        ActionHub.get('textIndentLeft').on('request', () => this.richView.annotationAction({ type: 'format', name: 'indent', value: "-1" }));
+        ActionHub.get('textIndentRight').on('request', () => this.richView.annotationAction({ type: 'format', name: 'indent', value: "+1" }));
+        ActionHub.get('textCodeBlock').on('request', (source) => this.richView.annotationAction({ type: 'format', name: 'code-block', value: ! source.value }));
+        ActionHub.get('textAlignLeft').on('request', () => this.richView.annotationAction({ type: 'format', name: 'align', value: '' }));
+        ActionHub.get('textAlignCenter').on('request', () => this.richView.annotationAction({ type: 'format', name: 'align', value: 'center' }));
+        ActionHub.get('textAlignRight').on('request', () => this.richView.annotationAction({ type: 'format', name: 'align', value: 'right' }));
+        ActionHub.get('textAlignJustify').on('request', () => this.richView.annotationAction({ type: 'format', name: 'align', value: 'justify' }));
+        ActionHub.get('textListOrdered').on('request', (source) => this.richView.annotationAction({ type: 'format', name: 'list', value: source.value ? '' : 'ordered' }));
+        ActionHub.get('textListBullet').on('request', (source) => this.richView.annotationAction({ type: 'format', name: 'list', value: source.value ? '' : 'bullet' }));
+        ActionHub.get('textClear').on('request', () => this.richView.annotationAction({ type: 'clean', name: 'script', value: '' }));
+        ActionHub.get('textLink').on('request', () => this.richView.annotationAction({ type: 'format', name: 'link', value: '' }));
     },
     showWelcome() {
 

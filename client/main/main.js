@@ -209,6 +209,11 @@ $(document).ready(() => {
             optionspanel.hideOptions();
         else if (tabName === 'analyses')
             dataSetModel.set('editingVar', null);
+        else if (tabName === 'annotation')
+            instance.set('editState', true);
+
+        if (tabName !== 'annotation')
+            instance.set('editState', false);
     });
 
     let halfWindowWidth = 585 + SplitPanelSection.sepWidth;
@@ -296,6 +301,106 @@ $(document).ready(() => {
     });
 
     let resultsView = new ResultsView({ el : '#results', iframeUrl : host.resultsViewUrl, model : instance });
+
+    resultsView.$el.on('annotationFocus', (event) => {
+        if (this._annotationReturnTab === undefined)
+            this._annotationReturnTab = null;
+
+        if (this._annotationReturnTab === null) {
+            let tab = ribbonModel.get('selectedTab');
+            if (tab !== 'annotation')
+                this._annotationReturnTab = tab;
+        }
+        ribbonModel.set('selectedTab', 'annotation');
+    });
+
+    resultsView.$el.on('annotationLostFocus', (event) => {
+        if (this._annotationReturnTab !== null) {
+            ribbonModel.set('selectedTab', this._annotationReturnTab);
+            this._annotationReturnTab = null;
+        }
+    });
+
+    resultsView.$el.on('annotationFormats', (event, data) => {
+        let annotationsTab = ribbonModel.getTab('annotation');
+        annotationsTab.clearValues();
+
+        let alignmentSet = false;
+
+        let button = null;
+        for (let name in data) {
+            switch (name) {
+                case 'bold':
+                    button = annotationsTab.getItem('textBold');
+                    button.setValue(data[name]);
+                    break;
+                case 'underline':
+                    button = annotationsTab.getItem('textUnderline');
+                    button.setValue(data[name]);
+                    break;
+                case 'italic':
+                    button = annotationsTab.getItem('textItalic');
+                    button.setValue(data[name]);
+                    break;
+                case 'strike':
+                    button = annotationsTab.getItem('textStrike');
+                    button.setValue(data[name]);
+                    break;
+                case 'script':
+                    if (data[name] === 'sub') {
+                        button = annotationsTab.getItem('textSubScript');
+                        button.setValue(true);
+                    }
+                    else if (data[name] === 'super') {
+                        button = annotationsTab.getItem('textSuperScript');
+                        button.setValue(true);
+                    }
+                    break;
+                case 'code-block':
+                    button = annotationsTab.getItem('textCodeBlock');
+                    button.setValue(data[name]);
+                    break;
+                case 'header':
+                    if (data[name] === 2) {
+                        button = annotationsTab.getItem('textH2');
+                        button.setValue(true);
+                    }
+                    break;
+                case 'list':
+                    if (data[name] === 'ordered') {
+                        button = annotationsTab.getItem('textListOrdered');
+                        button.setValue(true);
+                    }
+                    else if (data[name] === 'bullet') {
+                        button = annotationsTab.getItem('textListBullet');
+                        button.setValue(true);
+                    }
+                    break;
+                case 'align':
+                    alignmentSet = true;
+                    if (data[name] === 'center') {
+                        button = annotationsTab.getItem('textAlignCenter');
+                        button.setValue(true);
+                    }
+                    else if (data[name] === 'right') {
+                        button = annotationsTab.getItem('textAlignRight');
+                        button.setValue(true);
+                    }
+                    else if (data[name] === 'justify') {
+                        button = annotationsTab.getItem('textAlignJustify');
+                        button.setValue(true);
+                    }
+                    break;
+            }
+
+        }
+
+        if (alignmentSet === false) {
+            button = annotationsTab.getItem('textAlignLeft');
+            button.setValue(true);
+        }
+    });
+
     let optionspanel = new OptionsPanel({ el : '#main-options', iframeUrl : host.analysisUIUrl, model : instance });
     optionspanel.setDataSetModel(dataSetModel);
     optionspanel.$el.on('splitpanel-hide', () =>  window.focus() );
