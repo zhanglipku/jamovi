@@ -248,18 +248,22 @@ function setOptionsValues(data) {
         }, 0);
         return;
     }
-
+    let titleSet = false;
     var model = analysis.model;
     model.options.beginEdit();
     if (analysis.View.beginDataInitialization(data.id)) {
         var params = Options.getDefaultEventParams("changed");
         params.silent = true;
         _.each(data.options, function(value, key, list) {
-            if (key === 'results//heading')
+            if (key === 'results//heading') {
                 setTitle(value);
+                titleSet = true;
+            }
             else
                 model.options.setOptionValue(key, value, params);
         });
+        if (titleSet === false)
+            setTitle('');
         analysis.View.endDataInitialization(data.id);
     }
     model.options.endEdit();

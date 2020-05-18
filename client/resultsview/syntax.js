@@ -43,10 +43,12 @@ var SyntaxView = Elem.View.extend({
         let syntax = this.model.attributes.element;
         this.$syntax.text(syntax);
 
-        if (this.model.attributes.title)
-            this.$title.text(this.model.attributes.title);
-        else
-            this.$title.empty();
+        if (this.$title) {
+            if (this.model.attributes.title)
+                this.$title.text(this.model.attributes.title);
+            else
+                this.$title.empty();
+        }
 
         if (this.model.attributes.stale)
             this.$syntax.addClass('stale');

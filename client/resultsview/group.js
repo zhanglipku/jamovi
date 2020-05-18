@@ -91,6 +91,12 @@ const GroupView = Elem.View.extend({
         let elements = this.model.attributes.element.elements;
         let options = this.model.attributes.options;
 
+        if (this.$title) {
+            if (this.model.attributes.title)
+                this.$title.text(this.model.attributes.title);
+            else
+                this.$title.empty();
+        }
 
         let childOfSelectList = false;
         if (this.parent && this.parent.hasAnnotations)
@@ -114,10 +120,12 @@ const GroupView = Elem.View.extend({
             childAddress.push(element.name);
             childAddress = childAddress.join('/');
 
-            current = this._includeItem(current, childAddress, element, options);
+            let item = this._includeItem(current, childAddress, element, options);
 
-            if (current === null)
+            if (item === null)
                 continue;
+
+            current = item;
 
             let updateData = {
                 element: element,

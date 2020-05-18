@@ -53,7 +53,12 @@ const ImageView = Elem.View.extend({
     },
     render: function() {
 
-        this.$title.text(this.model.attributes.title);
+        if (this.$title) {
+            if (this.model.attributes.title)
+                this.$title.text(this.model.attributes.title);
+            else
+                this.$title.empty();
+        }
 
         if (this.model.attributes.status === 1)
             this.$el.attr('data-status', 'inited');

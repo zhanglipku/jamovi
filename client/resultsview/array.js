@@ -118,6 +118,13 @@ const ArrayView = Elem.View.extend({
         let elements = this.model.attributes.element.elements;
         let options = this.model.attributes.options;
 
+        if (this.$title) {
+            if (this.model.attributes.title)
+                this.$title.text(this.model.attributes.title);
+            else
+                this.$title.empty();
+        }
+
         if (this.mode !== 'text' && this.model.attributes.element.layout === 1) // list select
             this.$el.addClass('jmv-results-array-listselect');
         else
@@ -166,10 +173,12 @@ const ArrayView = Elem.View.extend({
             childAddress.push(element.name);
             childAddress = childAddress.join('/');
 
-            current = this._includeItem(current, childAddress, element, options, level);
+            let item = this._includeItem(current, childAddress, element, options, level);
 
-            if (current === null)
+            if (item === null)
                 continue;
+
+            current = item;
 
             let updateData = {
                 element: element,
