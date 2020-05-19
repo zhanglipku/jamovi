@@ -44,18 +44,6 @@ Analysis.prototype.reload = function() {
         Promise.resolve($.get(url, null, null, 'text')).then(response => {
             this._defn = yaml.safeLoad(response);
             this.options = new Options(this._defn.options);
-            if (this.results === null) {
-                this.results = {
-                    name: '',
-                    type: 'group',
-                    title: this._defn.title,
-                    visible: 2,
-                    group: { elements: [ ] },
-                    status: 'running',
-                    error: null,
-                };
-                this._parent._notifyResultsChanged(this);
-            }
         }),
         new Promise((resolve, reject) => {
             this._notifySetup = resolve;
@@ -172,7 +160,7 @@ const Analyses = Backbone.Model.extend({
     count() {
         return this._analyses.reduce((acc, cur) => acc + (cur.deleted ? 0 : 1), 0);
     },
-    create(name, ns, index) {
+    create(name, ns, title, index) {
         let analysis = new Analysis(this._nextId++, name, ns);
         analysis.enabled = true;
         analysis._parent = this;
@@ -180,6 +168,22 @@ const Analyses = Backbone.Model.extend({
             this._analyses.splice(index, 0, analysis);
         else
             this._analyses.push(analysis);
+
+        let results = {
+            results: {
+                name: '',
+                type: 'group',
+                title: title ? title : name,
+                visible: 2,
+                group: { elements: [ ] },
+                status: 'running',
+                error: null,
+            },
+            incAsText: '',
+            syntax: '',
+            references: [ ],
+        }
+        analysis.setResults(results);
         return analysis;
     },
     addAnalysis(name, ns, id, values, results, incAsText, syntax, references) {
