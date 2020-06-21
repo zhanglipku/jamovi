@@ -23,6 +23,8 @@ const ActionHub = require('./actionhub');
 const Instance = require('./instance');
 const Modules = require('./modules');
 const Notify = require('./notification');
+const JError = require('./errors').JError;
+
 require('./infobox');
 
 const keyboardJS = require('keyboardjs');
@@ -146,7 +148,7 @@ window.addEventListener('popstate', function () {
 });
 
 
-$(document).ready(() => {
+$(document).ready(async() => {
 
     if (navigator.platform === 'Win32')
         $('body').addClass('windows');
@@ -343,11 +345,14 @@ $(document).ready(() => {
 
     let toOpen = '';  // '' denotes blank data set
 
-    Promise.resolve(() => {
+    try {
 
-        return coms.ready;
+        await coms.ready;
 
-    }).then(() => {
+        let instanceId;
+        let match = /\/([a-z0-9-]+)\/$/.exec(window.location.pathname);
+        if (match)
+            instanceId = match[1];
 
         if (window.location.search.indexOf('?open=') !== -1) {
             toOpen = `${ window.location.search }${ window.location.hash }`.split('?open=')[1];
@@ -357,62 +362,63 @@ $(document).ready(() => {
                 toOpen = decodeURI(toOpen);
         }
 
-        return fetch('status', {
-            credentials: 'include'
-        }).then((response) => {
-            if (response.status === 204)
-                return;
-            else if (response.status === 200)
-                return response.json();
-            else
-                throw 'Connection failed';
-        }).then((status) => {
-            status = status || {};
-            if (status['new-url'])
-                history.replaceState({}, '', status['new-url']);
-            if (status.message || status.title || status['message-src']) {
-                infoBox.setup(status);
-                if (status.status === 'OK')
-                    return;
-                else
-                    return new Promise((resolve, reject) => { /* never */ });
+        let status;
+
+        if (host.isElectron) {
+            // in electron we have fallbacks
+            try {
+                status = await instance.open(toOpen, { existing: !!instanceId });
             }
-        });
+            catch (e) {
+                // if opening fails, open a blank data set
+                if (toOpen)
+                    status = await instance.open('', { existing: !!instanceId });
+                else
+                    throw e;
+            }
+        }
+        else {
+            // we disable notification (on failure), because we present a big message
+            status = await instance.open(toOpen, { existing: !!instanceId, notify: false });
+        }
 
-    }).then(() => {
+        if ('url' in status)
+            history.replaceState({}, '', `${host.baseUrl}${status.url}`);
 
-        let instanceId = /\/([a-z0-9-]+)\/$/.exec(window.location.pathname)[1];
-        return instance.connect(instanceId);
+        if (status.message || status.title || status['message-src'])
+            infoBox.setup(status);
 
-    }).catch((err) => {
+        instanceId = /\/([a-z0-9-]+)\/$/.exec(window.location.pathname)[1];
+        await instance.connect(instanceId);
+    }
+    catch (e) {
 
-        if (err.message)
-            err = err.message;
+        if (e instanceof JError) {
+            infoBox.setup({
+                title: e.message,
+                message: e.cause,
+                status: e.status,
+                'message-src': e.messageSrc,
+            });
+        }
+        else {
+            if (e.message)
+                console.log(e.message);
+            else
+                console.log(e);
 
-        console.log(err);
+            infoBox.setup({
+                title: 'Connection failed',
+                message: 'Unable to connect to the server',
+                status: 'disconnected',
+            });
+        }
 
-        infoBox.setup({
-            title: 'Connection failed',
-            message: 'Unable to connect to the server',
-            status: 'disconnected',
-        });
         infoBox.style.display = null;
+        await new Promise((resolve, reject) => { /* never */ });
+    }
 
-        return new Promise((resolve, reject) => { /* never */ });
+    if (instance.get('blank') && instance.analyses().count() === 0)
+        resultsView.showWelcome();
 
-    }).then(() => {
-
-        if ( ! instance.get('hasDataSet'))
-            return instance.open(toOpen);
-
-    }).catch((err) => { // if the initial open fails
-
-        if ( ! instance.get('hasDataSet'))
-            return instance.open('');
-
-    }).then(() => {
-
-        if (instance.get('blank') && instance.analyses().count() === 0)
-            resultsView.showWelcome();
-    });
 });
