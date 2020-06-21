@@ -1500,7 +1500,9 @@ const BackstageModel = Backbone.Model.extend({
 
         let deactivated = false;
         try {
-            for await (let progress of this.instance.open(filePath)) {
+
+            let stream = this.instance.open(filePath);
+            for await (let progress of stream) {
                 if ( ! deactivated) {
                     deactivated = true;
                     this.set('activated', false);
@@ -1508,6 +1510,15 @@ const BackstageModel = Backbone.Model.extend({
             }
             if ( ! deactivated)
                 this.set('activated', false);
+
+            let status = await stream;
+            let iid = status.url.match(/([a-z0-9-]+)\/$/)[1];
+            if (this.instance.attributes.blank
+                    && this.instance.dataSetModel().attributes.edited === false)
+                host.navigate(iid);
+            else
+                host.openWindow(iid);
+
         } catch (e) {
             if (deactivated)
                 this.set('activated', true);
